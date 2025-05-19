@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"sync"
+	"weather-api-go/internal/service"
 )
 
 type WeatherResponse struct {
@@ -21,6 +22,8 @@ var subscriptions = struct {
 	emails []string
 }{}
 
+var weatherService = service.NewWeatherService()
+
 func GetWeatherHandler(w http.ResponseWriter, r *http.Request) {
 	city := r.URL.Query().Get("city")
 	if city == "" {
@@ -28,10 +31,16 @@ func GetWeatherHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	weather, err := weatherService.GetWeather(city)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
 	resp := WeatherResponse{
-		City:    city,
-		TempC:   22.5,
-		Weather: "Sunny",
+		City:    weather.City,
+		TempC:   weather.TempC,
+		Weather: weather.Weather,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
